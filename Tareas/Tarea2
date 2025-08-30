@@ -1,0 +1,91 @@
+def astar_simple(grid, start, goal):
+    R, C = len(grid), len(grid[0])          # número de filas y columnas
+    sr, sc = start                          # coordenadas de inicio
+    gr, gc = goal                           # coordenadas de meta
+    if grid[sr][sc] == 1 or grid[gr][gc] == 1:
+        return None                         # si inicio o meta son obstáculos → no hay ruta
+
+    # Heurística: distancia Manhattan
+    def h(r, c, gr, gc):
+        return abs(r-gr) + abs(c-gc)
+
+    INF = 10**9
+    # Tablas auxiliares
+    g  = [[INF]*C for _ in range(R)]        
+    f  = [[INF]*C for _ in range(R)]        
+    pr = [[-1]*C for _ in range(R)]         
+    pc = [[-1]*C for _ in range(R)]         
+    in_open = [[False]*C for _ in range(R)] 
+
+    # Inicialización
+    g[sr][sc] = 0
+    f[sr][sc] = h(sr, sc, gr, gc)
+    open_set = [(sr, sc)]
+    in_open[sr][sc] = True
+
+    moves = [(1,0), (-1,0), (0,1), (0,-1)]
+
+    while open_set:
+        # Seleccionar nodo con f mínimo
+        best_i = 0
+        br, bc = open_set[0]
+        for i in range(1, len(open_set)):
+            r, c = open_set[i]
+            if f[r][c] < f[br][bc]:
+                best_i = i
+                br, bc = r, c
+
+        # Sacar el nodo
+        r, c = open_set.pop(best_i)
+        in_open[r][c] = False
+
+        # Llegamos a la meta
+        if (r, c) == (gr, gc):
+            path = []
+            cr, cc = gr, gc
+            while cr != -1:
+                path.insert(0, (cr, cc))
+                ncr, ncc = pr[cr][cc], pc[cr][cc]
+                cr, cc = ncr, ncc
+            return path
+
+        # Explorar vecinos
+        for dr, dc in moves:
+            nr, nc = r+dr, c+dc
+            if 0 <= nr < R and 0 <= nc < C and grid[nr][nc] == 0:
+                tentative = g[r][c] + 1
+                if tentative < g[nr][nc]:
+                    g[nr][nc] = tentative
+                    f[nr][nc] = tentative + h(nr, nc, gr, gc)
+                    pr[nr][nc] = r
+                    pc[nr][nc] = c
+                    if not in_open[nr][nc]:
+                        open_set.append((nr, nc))
+                        in_open[nr][nc] = True
+
+    return None
+
+
+# Ejemplo 4x4
+grid = [
+    [0, 0, 1, 0],
+    [1, 0, 1, 0],
+    [0, 0, 0, 0],
+    [0, 1, 1, 0],
+]
+
+start = (0, 0)
+goal  = (3, 3)
+
+path = astar_simple(grid, start, goal)
+print("Ruta encontrada:", path)
+
+# Marcar el camino con 2 en la matriz
+if path:
+    for r, c in path:
+        grid[r][c] = 2
+
+# Imprimir matriz final
+print("Matriz con camino:")
+for fila in grid:
+    print(fila)
